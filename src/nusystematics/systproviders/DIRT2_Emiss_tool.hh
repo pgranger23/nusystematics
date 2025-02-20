@@ -7,6 +7,11 @@
 #include "nusystematics/utility/GENIEUtils.hh"
 #include "nusystematics/utility/KinVarUtils.hh"
 
+#include "Physics/NuclearState/LocalFGM.h"
+#include "Physics/NuclearState/NuclearUtils.h"
+#include "Framework/Registry/Registry.h"
+#include "Framework/Algorithm/AlgConfigPool.h"
+
 #include "TFile.h"
 #include "TTree.h"
 
@@ -28,6 +33,8 @@ public:
   systtools::event_unit_response_t GetEventResponse(genie::EventRecord const &);
 
   std::string AsString();
+
+  void SetupNormalization();
 
   ~DIRT2_Emiss();
 

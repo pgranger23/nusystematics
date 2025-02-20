@@ -119,6 +119,8 @@ bool DIRT2_Emiss::SetupResponseCalculator(
     InitValidTree();
   }
 
+  this->SetupNormalization();
+
   return true;
 }
 
@@ -143,7 +145,8 @@ DIRT2_Emiss::GetEventResponse(genie::EventRecord const &ev) {
     nucleon_PDG = -999;
   }
   else {
-    Emiss_preFSI = nucleon->RemovalEnergy();
+    // Emiss_preFSI = nucleon->RemovalEnergy();
+    Emiss_preFSI = nucleon->Mass() - nucleon->Energy();
     nucleon_PDG = nucleon->Pdg();
   } 
 
@@ -351,6 +354,113 @@ DIRT2_Emiss::GetEventResponse(genie::EventRecord const &ev) {
 }
 
 std::string DIRT2_Emiss::AsString() { return ""; }
+
+void DIRT2_Emiss::SetupNormalization() {
+  //TODO: Make sure it is inizialized with the Ar23 config
+  genie::AlgConfigPool * conf_pool = genie::AlgConfigPool::Instance();
+  genie::Registry * gpl = conf_pool->GlobalParameterList();
+  genie::LocalFGM LFG;
+  LFG.Configure(*gpl);
+  int A = 40;
+  int target_pdgc = 1000180400;
+  int nucleon_pdgc = 2112; //neutron
+
+  double neutronMass = genie::constants::kNeutronMass;
+
+  genie::Target tgt(target_pdgc);
+
+  float R0 = 1.4;
+  float R = R0*std::pow(A, 1./3);
+  float rmax = 3*R;
+  float dr = R/400.;
+  float fPMax = 0.4;
+  int npbins = (int) (1000*fPMax);
+  double dp = fPMax / (npbins-1);
+  double Q = 0.01;
+
+  int nbins_r = (int)(rmax/dr) + 1;
+
+  TH2D *prob = new TH2D("prob", "prob", npbins, 0, fPMax, nbins_r, 0, rmax);
+  TH2D *prob_e = new TH2D("prob_e", "prob_e", npbins, 0, fPMax, 200, 0, 0.05);
+  
+  for(int j = 0; j < nbins_r; j++) {
+    float r = j * dr;
+    float nucl_density = genie::utils::nuclear::Density(r,A);
+    double KF = LFG.LocalFermiMomentum( tgt, nucleon_pdgc, r );
+    
+    double fSRC_Fraction = 0.12;
+    double fPCutOff = 0.7;
+
+    double integral_positive_e = 0;
+    double integral_negative_e = 0;
+
+    for(int i = 0; i < npbins; i++) {
+      double p  = i * dp;
+      double p2 = TMath::Power(p,2);
+
+      // calculate |phi(p)|^2
+      double phi2 = 0;
+          if (p <= KF){
+              phi2 = (1./(4*genie::constants::kPi)) * (3/TMath::Power(KF,3.)) * ( 1 - fSRC_Fraction );
+          }else if( p > KF && p < fPCutOff ){
+              phi2 = (1./(4*genie::constants::kPi)) * ( fSRC_Fraction / (1./KF - 1./fPCutOff) ) / TMath::Power(p,4.);
+          }
+
+      // calculate probability density : dProbability/dp
+      double dP_dp = 4*genie::constants::kPi * p2 * phi2*r*r*nucl_density;
+      double Tf = sqrt(std::pow(KF, 2) + std::pow(neutronMass, 2)) - neutronMass;
+      double Tnucl = sqrt(p2 + std::pow(neutronMass, 2)) - neutronMass;
+      double Emiss = Q + Tf - Tnucl;
+
+      if (Emiss >= 0){
+        integral_positive_e += dP_dp;
+        prob->Fill(p, r, dP_dp);
+      } else {
+        integral_negative_e += dP_dp;
+      }
+    }
+    integral_positive_e = std::max(integral_positive_e, 1e-10);
+    //Rescale all the bins
+    for(int i = 0; i < npbins; i++) {
+      prob->SetBinContent(i + 1, j +1, prob->GetBinContent(i + 1, j + 1)*(integral_positive_e + integral_negative_e)/integral_positive_e);
+    }
+  }
+
+  for(uint i = 1; i <= prob->GetNbinsX(); i++) {
+    for(uint j = 1; j <= prob->GetNbinsY(); j++) {
+      double p = prob->GetXaxis()->GetBinCenter(i);
+      double r = prob->GetYaxis()->GetBinCenter(j);
+      double KF = LFG.LocalFermiMomentum( tgt, nucleon_pdgc, r );
+      double Tf = sqrt(std::pow(KF, 2) + genie::constants::kNucleonMass2) - genie::constants::kNucleonMass;
+      double Tnucl = sqrt(p*p + genie::constants::kNucleonMass2) - genie::constants::kNucleonMass;
+      double Emiss = Q + Tf - Tnucl;
+
+      prob_e->Fill(p, Emiss, prob->GetBinContent(i, j));
+    }
+  }
+
+  // for(uint i = 1; i <= prob_e->GetNbinsX(); i++) {
+  //   double density_negative_e = prob_e->GetBinContent(i, 0);
+  //   double total_density = prob_e->Integral(i, i, 0, prob_e->GetNbinsY());
+  //   double rescaling = 0;
+  //   for(uint j = 1; j <= prob_e->GetNbinsY(); j++) {
+  //     prob_e->SetBinContent(i, j, prob_e->GetBinContent(i, j) - density_negative_e);
+  //   }
+  // }
+
+  valid_file->cd();
+  prob->Write();
+  TH1D *prob_p = prob->ProjectionX();
+  prob_p->Write();
+  TH1D *prob_r = prob->ProjectionY();
+  prob_r->Write();
+  prob_e->Write();
+
+  TH1D *prob_ex = prob_e->ProjectionX();
+  prob_ex->Write();
+  TH1D *prob_ey = prob_e->ProjectionY();
+  prob_ey->Write();
+}
 
 void DIRT2_Emiss::InitValidTree() {
 

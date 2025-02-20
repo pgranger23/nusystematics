@@ -3,6 +3,8 @@
 #include "nusystematics/utility/enumclass2int.hh"
 #include "nusystematics/utility/simbUtility.hh"
 
+#include "Physics/NuclearState/LocalFGM.h"
+
 #include <cmath>
 
 namespace nusyst {
