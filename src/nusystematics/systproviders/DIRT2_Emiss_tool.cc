@@ -368,6 +368,7 @@ void DIRT2_Emiss::SetupNormalization() {
   double neutronMass = genie::constants::kNeutronMass;
 
   genie::Target tgt(target_pdgc);
+  tgt.SetHitNucPdg(nucleon_pdgc);
 
   float R0 = 1.4;
   float R = R0*std::pow(A, 1./3);
@@ -386,7 +387,17 @@ void DIRT2_Emiss::SetupNormalization() {
   for(int j = 0; j < nbins_r; j++) {
     float r = j * dr;
     float nucl_density = genie::utils::nuclear::Density(r,A);
-    double KF = LFG.LocalFermiMomentum( tgt, nucleon_pdgc, r );
+    // double KF = LFG.LocalFermiMomentum( tgt, nucleon_pdgc, r );
+    bool is_p = false;
+    double numNuc = (double) ( (is_p) ? tgt.Z() : tgt.N() );
+
+  //  double hbarc = kLightSpeed*kPlankConstant/genie::units::fermi;
+
+  double KF = TMath::Power( 3*genie::constants::kPi2*numNuc*genie::utils::nuclear::Density( r, tgt.A() ),
+			   1.0/3.0 )
+    / genie::units::fermi ;
+
+    std::cout << "r: " << r << " KF: " << KF << " numNuc: " << numNuc << std::endl;
     
     double fSRC_Fraction = 0.12;
     double fPCutOff = 0.7;
