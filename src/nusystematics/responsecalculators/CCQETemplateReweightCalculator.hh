@@ -7,6 +7,7 @@
 
 #include "systematicstools/utility/ROOTUtility.hh"
 #include "systematicstools/utility/exceptions.hh"
+#include "systematicstools/utility/string_parsers.hh"
 
 #include "fhiclcpp/ParameterSet.h"
 
@@ -210,6 +211,7 @@ namespace nusyst {
       std::string hName = val_config.get<std::string>("name");
       std::string input_hist = val_config.get<std::string>("input_hist");
       std::string input_file = val_config.get<std::string>("input_file", default_root_file); // If specified per hist, replace it
+      input_file = systtools::expand_env_vars(input_file);
 
       // if it does not start with "/", find it under ${NUSYSTEMATICS_FQ_DIR}/data/
       if(input_file.find("/")!=0){
