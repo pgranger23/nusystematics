@@ -1,6 +1,7 @@
 #ifndef nusystematics_RESPONSE_CALCULATORS_CCQERPAReweightCalculator_HH_SEEN
 #define nusystematics_RESPONSE_CALCULATORS_CCQERPAReweightCalculator_HH_SEEN
 
+#include <cmath>
 #include "systematicstools/interface/types.hh"
 
 #include "systematicstools/interpreters/PolyResponse.hh"
@@ -95,9 +96,9 @@ namespace nusyst {
 
     //std::cout << "[CCQERPAReweightCalculator] weight = " << weight << std::endl;
 
-    if(weight!=weight){
+    if(!std::isfinite(weight)){
 
-      printf("[CCQERPAReweightCalculator::GetRPAReweight] Nan weight for\n"); 
+      printf("[CCQERPAReweightCalculator::GetRPAReweight] Nan/non-finite weight for\n"); 
       printf("[CCQERPAReweightCalculator::GetRPAReweight] (Enu_GeV, kin_Y, kin_Z) = (%1.3f, %1.3f, %1.3f), enu_range = %d\n", Enu_GeV, bin_kin[0], bin_kin[1], enu_range);
       printf("[CCQERPAReweightCalculator::GetRPAReweight] -> (Enu_GeV, kin_Y, kin_Z) = (%1.3f, %1.3f, %1.3f)\n", Enu_GeV_ForInterp, kin_Y_ForInterp, kin_Z_ForInterp);
       weight = 1.;

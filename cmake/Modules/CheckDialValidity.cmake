@@ -20,7 +20,8 @@ message(STATUS "GENIE_VERSION_CODE: ${GENIE_VERSION_CODE}")
 # https://github.com/GENIE-MC/Reweight/pull/45
 # Assuming these are activated for GENIE>=3.08.00 for now (01/12/2026),
 # but need to be updated
-if(GENIE_VERSION_CODE GREATER_EQUAL 30800 OR EXTENSION MATCHES "sbn")
+if((GENIE_VERSION_CODE GREATER_EQUAL 30800 OR EXTENSION MATCHES "sbn") AND EXISTS "${GENIE_RW_INC_DIR}/RwCalculators/GReWeightINukeExtra.h")
   message(STATUS "BUILD_AR25_FSI_DIALS")
   add_definitions(-DBUILD_AR25_FSI_DIALS=1)
 endif()
+

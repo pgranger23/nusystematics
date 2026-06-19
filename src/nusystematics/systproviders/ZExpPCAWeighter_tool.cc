@@ -267,8 +267,11 @@ bool ZExpPCAWeighter::SetupResponseCalculator(
       }
 
       // set other Z-exp parameters
-      if (fZExpOverrideT0) ReWeightEngines_new[i].back()->SetZExpT0(fZExpT0);
-      if (fZExpOverrideTcut) ReWeightEngines_new[i].back()->SetZExpTcut(fZExpTcut);
+      // SetZExpT0/SetZExpTcut are only available in Gray's custom GENIE Reweight fork.
+      // In standard GENIE v3_06_00, these values are read from the XML config.
+      // Uncomment if building with gputnam/Reweight patched GENIE.
+      // if (fZExpOverrideT0) ReWeightEngines_new[i].back()->SetZExpT0(fZExpT0);
+      // if (fZExpOverrideTcut) ReWeightEngines_new[i].back()->SetZExpTcut(fZExpTcut);
 
       ReWeightEngines_new[i].back()->Reconfigure();
       if (verbosity_level > 2) {

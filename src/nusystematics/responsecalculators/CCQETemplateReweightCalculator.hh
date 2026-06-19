@@ -1,17 +1,13 @@
 #ifndef nusystematics_RESPONSE_CALCULATORS_CCQETemplateReweightCalculator_HH_SEEN
 #define nusystematics_RESPONSE_CALCULATORS_CCQETemplateReweightCalculator_HH_SEEN
 
+#include <cmath>
 #include "systematicstools/interface/types.hh"
-
 #include "systematicstools/interpreters/PolyResponse.hh"
-
 #include "systematicstools/utility/ROOTUtility.hh"
 #include "systematicstools/utility/string_parsers.hh"
 #include "systematicstools/utility/exceptions.hh"
-#include "systematicstools/utility/string_parsers.hh"
-
 #include "fhiclcpp/ParameterSet.h"
-
 #include "TH1.h"
 #include "TH2.h"
 #include "TH3.h"
@@ -100,7 +96,7 @@ namespace nusyst {
 
       // If weight is nan, find the closest grid point that isn't nan
       // TODO: is there some existing function I can use for this?
-      if(weight!=weight){
+      if(!std::isfinite(weight)){
 
         double best_weight = 1.0;
         bool found_valid = false;
@@ -137,7 +133,7 @@ namespace nusyst {
         double xsec_WithoutTemplate_grid = map_ENuRange_to_WithoutTemplateXSec[enu_range]->Interpolate(x_for_interp, y_for_interp, z_for_interp);
 
         double grid_weight = ( xsec_WithoutTemplate_grid * (1.-parameter_value) + xsec_WithTemplate_grid * parameter_value ) / xsec_WithoutTemplate_grid;
-        if(grid_weight == grid_weight) { 
+        if(std::isfinite(grid_weight)) { 
           best_weight = grid_weight;
           found_valid = true;
         } 
@@ -169,7 +165,7 @@ namespace nusyst {
                 double xsec_WithTemplate_try = map_ENuRange_to_WithTemplateXSec[enu_range]->Interpolate(x_for_interp, y_for_interp, z_for_interp);
                 double xsec_WithoutTemplate_try = map_ENuRange_to_WithoutTemplateXSec[enu_range]->Interpolate(x_for_interp, y_for_interp, z_for_interp);
                 double try_weight = ( xsec_WithoutTemplate_try * (1.-parameter_value) + xsec_WithTemplate_try * parameter_value ) / xsec_WithoutTemplate_try;
-                if(try_weight == try_weight) { 
+                if(std::isfinite(try_weight)) { 
                   if(dist < min_dist) {
                     min_dist = dist;
                     best_weight = try_weight;
