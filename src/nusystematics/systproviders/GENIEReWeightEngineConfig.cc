@@ -297,7 +297,6 @@ ConfigureMECWeightEngine(SystMetaData const &MECmd,
         kXSecTwkDial_NormCCMEC,
         kXSecTwkDial_NormNCMEC,
         kXSecTwkDial_NormEMMEC,
-        kXSecTwkDial_DecayAngMEC,
         kXSecTwkDial_FracPN_CCMEC,
         kXSecTwkDial_FracDelta_CCMEC,
         kXSecTwkDial_XSecShape_CCMEC,
@@ -305,6 +304,17 @@ ConfigureMECWeightEngine(SystMetaData const &MECmd,
         kXSecTwkDial_XSecShape_CCMEC_Martini,
         kXSecTwkDial_EnergyDependence_CCMEC
       },
+      "xsec_mec", []() { return new GReWeightXSecMEC; }, UseFullHERG, param_map);
+
+  // DecayAngMEC (amplitude) and DecayAng2MEC (frequency) are responseless dials
+  // whose joint MEC nucleon-cluster decay-angle effect is delivered through the
+  // DecayAngMECVariationResponse spline (its 25 universes index the (amplitude,
+  // frequency) grid). They are therefore wired as dependents of the response,
+  // NOT as independent dials (DecayAngMEC alone gives only the amplitude term and
+  // DecayAng2MEC alone is inert).
+  AddResponseAndDependentDials(
+      MECmd, "DecayAngMECVariationResponse",
+      { kXSecTwkDial_DecayAngMEC, kXSecTwkDial_DecayAng2MEC },
       "xsec_mec", []() { return new GReWeightXSecMEC; }, UseFullHERG, param_map);
 
   return param_map;
