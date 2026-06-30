@@ -292,29 +292,23 @@ ConfigureMECWeightEngine(SystMetaData const &MECmd,
 
   bool UseFullHERG = tool_options.get<bool>("UseFullHERG", false);
 
+  // NOTE: the MEC alternative-model dials (XSecShape_CCMEC_{Empirical,Martini},
+  // EnergyDependence_CCMEC) and the DecayAng response (which needs DecayAng2MEC)
+  // rely on the patched GReWeight in pgranger23/Reweight; their GSyst_t enums do
+  // NOT exist in standard/ups GENIE, so they are excluded here so this builds
+  // against ups GENIE (NUISANCE / non-custom builds). To enable them, build
+  // against the custom GReWeight and restore them here + the
+  // AddResponseAndDependentDials("DecayAngMECVariationResponse", ...) block.
   AddIndependentParameters(
       MECmd, {
         kXSecTwkDial_NormCCMEC,
         kXSecTwkDial_NormNCMEC,
         kXSecTwkDial_NormEMMEC,
+        kXSecTwkDial_DecayAngMEC,
         kXSecTwkDial_FracPN_CCMEC,
         kXSecTwkDial_FracDelta_CCMEC,
-        kXSecTwkDial_XSecShape_CCMEC,
-        kXSecTwkDial_XSecShape_CCMEC_Empirical,
-        kXSecTwkDial_XSecShape_CCMEC_Martini,
-        kXSecTwkDial_EnergyDependence_CCMEC
+        kXSecTwkDial_XSecShape_CCMEC
       },
-      "xsec_mec", []() { return new GReWeightXSecMEC; }, UseFullHERG, param_map);
-
-  // DecayAngMEC (amplitude) and DecayAng2MEC (frequency) are responseless dials
-  // whose joint MEC nucleon-cluster decay-angle effect is delivered through the
-  // DecayAngMECVariationResponse spline (its 25 universes index the (amplitude,
-  // frequency) grid). They are therefore wired as dependents of the response,
-  // NOT as independent dials (DecayAngMEC alone gives only the amplitude term and
-  // DecayAng2MEC alone is inert).
-  AddResponseAndDependentDials(
-      MECmd, "DecayAngMECVariationResponse",
-      { kXSecTwkDial_DecayAngMEC, kXSecTwkDial_DecayAng2MEC },
       "xsec_mec", []() { return new GReWeightXSecMEC; }, UseFullHERG, param_map);
 
   return param_map;
